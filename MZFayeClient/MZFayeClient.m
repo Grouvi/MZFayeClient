@@ -185,12 +185,12 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
                                           MZFayeClientBayeuxConnectionTypeIFrame,
                                           MZFayeClientBayeuxConnectionTypeWebSocket];
 
-    NSDictionary *message = @{MZFayeClientBayeuxMessageChannelKey : MZFayeClientBayeuxChannelHandshake,
-                              MZFayeClientBayeuxMessageVersionKey : MZFayeClientBayeuxVersion,
-                              MZFayeClientBayeuxMessageMinimuVersionKey : MZFayeClientBayeuxMinimumVersion,
-                              MZFayeClientBayeuxMessageSupportedConnectionTypesKey : supportedConnectionTypes
-                              };
-
+    NSMutableDictionary *message = [@{  MZFayeClientBayeuxMessageChannelKey : MZFayeClientBayeuxChannelHandshake,
+                                        MZFayeClientBayeuxMessageVersionKey : MZFayeClientBayeuxVersion,
+                                        MZFayeClientBayeuxMessageMinimuVersionKey : MZFayeClientBayeuxMinimumVersion,
+                                        MZFayeClientBayeuxMessageSupportedConnectionTypesKey : supportedConnectionTypes
+                                    } mutableCopy];
+    [self applyExtensionForMessage:message forChannel:MZFayeClientBayeuxChannelHandshake];
     [self writeMessageToWebSocket:message];
 }
 
@@ -202,11 +202,11 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
  */
 - (void)sendBayeuxConnectMessage
 {
-    NSDictionary *message = @{MZFayeClientBayeuxMessageChannelKey : MZFayeClientBayeuxChannelConnect,
-                              MZFayeClientBayeuxMessageClientIdKey : self.clientId,
-                              MZFayeClientBayeuxMessageConnectionTypeKey : MZFayeClientBayeuxConnectionTypeWebSocket
-                              };
-
+    NSMutableDictionary *message = [@{MZFayeClientBayeuxMessageChannelKey : MZFayeClientBayeuxChannelConnect,
+            MZFayeClientBayeuxMessageClientIdKey : self.clientId,
+            MZFayeClientBayeuxMessageConnectionTypeKey : MZFayeClientBayeuxConnectionTypeWebSocket
+    } mutableCopy];
+    [self applyExtensionForMessage:message forChannel:MZFayeClientBayeuxChannelHandshake];
     [self writeMessageToWebSocket:message];
 }
 
@@ -238,10 +238,7 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
                                       MZFayeClientBayeuxMessageSubscriptionKey : channel
                                       } mutableCopy];
 
-    NSDictionary *extension = self.channelExtensions[channel];
-    if (extension) {
-        [message setObject:extension forKey:MZFayeClientBayeuxMessageExtensionKey];
-    }
+    [self applyExtensionForMessage:message forChannel:MZFayeClientBayeuxChannelHandshake];
 
     [self writeMessageToWebSocket:[message copy]];
 
@@ -256,12 +253,12 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
  */
 - (void)sendBayeuxUnsubscribeMessageWithChannel:(NSString *)channel
 {
-    NSDictionary *message = @{
-                              MZFayeClientBayeuxMessageChannelKey : MZFayeClientBayeuxChannelUnsubscribe,
-                              MZFayeClientBayeuxMessageClientIdKey : self.clientId,
-                              MZFayeClientBayeuxMessageSubscriptionKey : channel
-                              };
-
+    NSMutableDictionary *message = [@{
+            MZFayeClientBayeuxMessageChannelKey : MZFayeClientBayeuxChannelUnsubscribe,
+            MZFayeClientBayeuxMessageClientIdKey : self.clientId,
+            MZFayeClientBayeuxMessageSubscriptionKey : channel
+    } mutableCopy];
+    [self applyExtensionForMessage:message forChannel:channel];
     [self writeMessageToWebSocket:message];
 }
 
@@ -289,14 +286,19 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
     if (extension) {
         [message setObject:extension forKey:MZFayeClientBayeuxMessageExtensionKey];
     } else {
-        NSDictionary *extensionForChannel = self.channelExtensions[channel];
-        if (extensionForChannel) {
-            [message setObject:extensionForChannel forKey:MZFayeClientBayeuxMessageExtensionKey];
-        }
+        [self applyExtensionForMessage:message forChannel:MZFayeClientBayeuxChannelHandshake];
     }
 
     [self writeMessageToWebSocket:[message copy]];
 
+}
+
+-(void)applyExtensionForMessage:(NSMutableDictionary *)message forChannel:(NSString *)channel
+{
+    NSDictionary *extension = self.channelExtensions[channel];
+    if (extension) {
+        message[MZFayeClientBayeuxMessageExtensionKey] = extension;
+    }
 }
 
 - (void)clearSubscriptions
