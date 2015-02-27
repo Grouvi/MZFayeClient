@@ -217,10 +217,10 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
  */
 - (void)sendBayeuxDisconnectMessage
 {
-    NSDictionary *message = @{MZFayeClientBayeuxMessageChannelKey : MZFayeClientBayeuxChannelDisconnect,
-                              MZFayeClientBayeuxMessageClientIdKey : self.clientId
-                              };
-
+    NSMutableDictionary *message = [@{MZFayeClientBayeuxMessageChannelKey : MZFayeClientBayeuxChannelDisconnect,
+            MZFayeClientBayeuxMessageClientIdKey : self.clientId
+    } mutableCopy];
+    [self applyExtensionForMessage:message forChannel:MZFayeClientBayeuxChannelDisconnect];
     [self writeMessageToWebSocket:message];
 }
 
@@ -270,7 +270,7 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
 - (void)sendBayeuxPublishMessage:(NSDictionary *)messageDictionary toChannel:(NSString *)channel usingExtension:(NSDictionary *)extension
 {
     if (!(self.isConnected && self.isWebSocketOpen)) {
-        [self didFailWithMessage:@"FayeClient not connected to server."];
+        [self didFailWithMessage:@"FayeClient not connected to server." errorStatus:0];
         return;
     }
 
@@ -474,10 +474,10 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
     self.webSocket = nil;
 }
 
-- (void)didFailWithMessage:(NSString *)message
+- (void)didFailWithMessage:(NSString *)message errorStatus:(NSUInteger)errorStatus
 {
     if ([self.delegate respondsToSelector:@selector(fayeClient:didFailWithError:)] && message) {
-        NSError *error = [NSError errorWithDomain:MZFayeClientWebSocketErrorDomain code:-100 userInfo:@{NSLocalizedDescriptionKey : message}];
+        NSError *error = [NSError errorWithDomain:MZFayeClientWebSocketErrorDomain code:errorStatus userInfo:@{NSLocalizedDescriptionKey : message}];
         [self.delegate fayeClient:self didFailWithError:error];
     }
 }
@@ -511,7 +511,7 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
                 [self subscribePendingSubscriptions];
 
             } else {
-                [self didFailWithMessage:[NSString stringWithFormat:@"Faye client couldn't handshake with server. %@",fayeMessage.error]];
+                [self didFailWithMessage:[NSString stringWithFormat:@"Faye client couldn't handshake with server. %@",fayeMessage.error] errorStatus:fayeMessage.errorStatus];
             }
 
         } else if ([fayeMessage.channel isEqualToString:MZFayeClientBayeuxChannelConnect]) {
@@ -520,7 +520,7 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
                 self.connected = YES;
                 [self sendBayeuxConnectMessage];
             } else {
-                [self didFailWithMessage:[NSString stringWithFormat:@"Faye client couldn't connect to server. %@",fayeMessage.error]];
+                [self didFailWithMessage:[NSString stringWithFormat:@"Faye client couldn't connect to server. %@",fayeMessage.error] errorStatus:fayeMessage.errorStatus];
             }
 
         } else if ([fayeMessage.channel isEqualToString:MZFayeClientBayeuxChannelDisconnect]) {
@@ -535,7 +535,7 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
                     [self.delegate fayeClient:self didDisconnectWithError:nil];
                 }
             } else {
-                [self didFailWithMessage:[NSString stringWithFormat:@"Faye client couldn't disconnect from server. %@",fayeMessage.error]];
+                [self didFailWithMessage:[NSString stringWithFormat:@"Faye client couldn't disconnect from server. %@",fayeMessage.error] errorStatus:fayeMessage.errorStatus];
             }
 
         } else if ([fayeMessage.channel isEqualToString:MZFayeClientBayeuxChannelSubscribe]) {
@@ -549,7 +549,7 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
                     [self.delegate fayeClient:self didSubscribeToChannel:fayeMessage.subscription];
                 }
             } else {
-                [self didFailWithMessage:[NSString stringWithFormat:@"Faye client couldn't subscribe channel %@ with server. %@",fayeMessage.subscription, fayeMessage.error]];
+                [self didFailWithMessage:[NSString stringWithFormat:@"Faye client couldn't subscribe channel %@ with server. %@",fayeMessage.subscription, fayeMessage.error] errorStatus:fayeMessage.errorStatus];
             }
 
         } else if ([fayeMessage.channel isEqualToString:MZFayeClientBayeuxChannelUnsubscribe]) {
@@ -561,7 +561,7 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
                     [self.delegate fayeClient:self didUnsubscribeFromChannel:fayeMessage.subscription];
                 }
             } else {
-                [self didFailWithMessage:[NSString stringWithFormat:@"Faye client couldn't unsubscribe channel %@ with server. %@",fayeMessage.subscription, fayeMessage.error]];
+                [self didFailWithMessage:[NSString stringWithFormat:@"Faye client couldn't unsubscribe channel %@ with server. %@",fayeMessage.subscription, fayeMessage.error] errorStatus:fayeMessage.errorStatus];
             }
 
         } else if ([self.openChannelSubscriptions containsObject:fayeMessage.channel]) {
