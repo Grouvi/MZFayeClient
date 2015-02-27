@@ -39,7 +39,12 @@
         self.minimumVersion = dictionary[@"minimumVersion"];
         self.supportedConnectionTypes = dictionary[@"supportedConnectionTypes"];
         self.advice = dictionary[@"advice"];
-        self.error = dictionary[@"error"];
+        self.error = dictionary[@"error"][@"message"];
+        if(dictionary[@"error"][@"status"])
+        {
+            self.errorStatus = [dictionary[@"error"][@"status"] unsignedLongValue];
+        }
+
         self.subscription = dictionary[@"subscription"];
         self.timestamp = [NSDate dateWithTimeIntervalSince1970:[dictionary[@"timestamp"] timeInterval]];
         self.data = dictionary[@"data"];

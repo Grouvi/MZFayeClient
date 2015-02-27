@@ -41,6 +41,7 @@
 @property (nonatomic, strong) NSDate *timestamp;
 @property (nonatomic, strong) NSDictionary *data;
 @property (nonatomic, strong) NSDictionary *ext;
+@property (nonatomic) NSUInteger errorStatus;
 
 + (instancetype)messageFromDictionary:(NSDictionary *)dictionary;
 
