@@ -39,17 +39,13 @@
         self.minimumVersion = dictionary[@"minimumVersion"];
         self.supportedConnectionTypes = dictionary[@"supportedConnectionTypes"];
         self.advice = dictionary[@"advice"];
-        if(dictionary[@"error"][@"message"])
+        if([dictionary[@"error"] isKindOfClass:[NSDictionary class]])
         {
             self.error = dictionary[@"error"][@"message"];
+            self.errorStatus = [dictionary[@"error"][@"status"] unsignedLongValue];
         }else
         {
             self.error = dictionary[@"error"];
-        }
-
-        if(dictionary[@"error"][@"status"])
-        {
-            self.errorStatus = [dictionary[@"error"][@"status"] unsignedLongValue];
         }
 
         self.subscription = dictionary[@"subscription"];
