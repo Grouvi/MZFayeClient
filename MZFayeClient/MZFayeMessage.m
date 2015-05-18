@@ -29,7 +29,8 @@
 
 - (instancetype)initFromDictionary:(NSDictionary *)dictionary
 {
-    if (self = [super init]) {
+    if (self = [super init])
+    {
         self.Id = dictionary[@"id"];
         self.channel = dictionary[@"channel"];
         self.clientId = dictionary[@"clientId"];
@@ -39,11 +40,22 @@
         self.minimumVersion = dictionary[@"minimumVersion"];
         self.supportedConnectionTypes = dictionary[@"supportedConnectionTypes"];
         self.advice = dictionary[@"advice"];
-        if([dictionary[@"error"] isKindOfClass:[NSDictionary class]])
+        if ([dictionary[@"error"] isKindOfClass:[NSString class]])
         {
-            self.error = dictionary[@"error"][@"message"];
-            self.errorStatus = [dictionary[@"error"][@"status"] unsignedLongValue];
-        }else
+            NSString *errorString = dictionary[@"error"];
+            NSError *error;
+            NSData *jsonData = [errorString dataUsingEncoding:NSUTF8StringEncoding];
+            NSDictionary *errorDict = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:&error];
+            if (error)
+            {
+                self.error = dictionary[@"error"];
+            } else
+            {
+                self.error = errorDict[@"message"];
+                self.errorStatus = [errorDict[@"status"] unsignedLongValue];
+            }
+
+        } else
         {
             self.error = dictionary[@"error"];
         }
