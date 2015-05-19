@@ -43,16 +43,16 @@
         if ([dictionary[@"error"] isKindOfClass:[NSString class]])
         {
             NSString *errorString = dictionary[@"error"];
-            NSError *error;
-            NSData *jsonData = [errorString dataUsingEncoding:NSUTF8StringEncoding];
-            NSDictionary *errorDict = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:&error];
-            if (error)
+            NSArray *components = [errorString componentsSeparatedByString:@":"];
+            if (components.count == 2)
             {
-                self.error = dictionary[@"error"];
+                NSString *statusCode = components.firstObject;
+                NSString *descriptionString = components.lastObject;
+                self.errorStatus = [statusCode integerValue];
+                self.error = descriptionString;
             } else
             {
-                self.error = errorDict[@"message"];
-                self.errorStatus = [errorDict[@"status"] unsignedLongValue];
+                self.error = dictionary[@"error"];
             }
 
         } else
