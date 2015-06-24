@@ -568,19 +568,8 @@ NSInteger const MZFayeClientDefaultMaximumAttempts = 5;
                 [self didFailWithMessage:[NSString stringWithFormat:@"Faye client couldn't unsubscribe channel %@ with server. %@",fayeMessage.subscription, fayeMessage.error] errorStatus:fayeMessage.errorStatus];
             }
 
-        } else if ([self.openChannelSubscriptions containsObject:fayeMessage.channel]) {
-
-            if (self.subscribedChannels[fayeMessage.channel] &&
-                self.subscribedChannels[fayeMessage.channel] != [NSNull null]) {
-
-                MZFayeClientSubscriptionHandler handler = self.subscribedChannels[fayeMessage.channel];
-                handler(fayeMessage.data);
-
-            } else if ([self.delegate respondsToSelector:@selector(fayeClient:didReceiveMessage:fromChannel:)]) {
-                [self.delegate fayeClient:self didReceiveMessage:fayeMessage.data fromChannel:fayeMessage.channel];
-            }
         } else {
-            // No match for channel
+            [self.delegate fayeClient:self didReceiveMessage:fayeMessage.data fromChannel:fayeMessage.channel];
         }
 
     }
